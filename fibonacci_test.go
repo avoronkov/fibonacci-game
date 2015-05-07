@@ -4,22 +4,26 @@ import (
 	"testing"
 )
 
+var testSequence = []int{1, 1, 2, 3, 5, 8}
+
 func TestFieldMoveRight(t *testing.T) {
 	before := Field{Data: [][]int{
 		{0, 1, 0, 0},
 		{0, 2, 3, 0},
 		{1, 2, 3, 5},
 		{0, 2, 2, 1},
-	}}
+	},
+		Sequence: testSequence,
+	}
 	before.Move(Right)
-	after := Field{Data: [][]int{
+	after := [][]int{
 		{0, 0, 0, 1},
 		{0, 0, 0, 5},
 		{0, 0, 3, 8},
 		{0, 0, 2, 3},
-	}}
+	}
 	for i, line := range before.Data {
-		if exp := after.Data[i]; !intSliceEqual(line, exp) {
+		if exp := after[i]; !intSliceEqual(line, exp) {
 			t.Errorf("Expected %v, found: %v", exp, line)
 		}
 	}
@@ -31,7 +35,9 @@ func TestMoveLeft(t *testing.T) {
 		{0, 2, 3, 0},
 		{1, 2, 3, 5},
 		{1, 2, 2, 0},
-	}}
+	},
+		Sequence: testSequence,
+	}
 	before.Move(Left)
 	after := [][]int{
 		{1, 0, 0, 0},
@@ -52,7 +58,9 @@ func TestMoveUp(t *testing.T) {
 		{0, 2, 2, 2},
 		{1, 3, 3, 2},
 		{0, 0, 5, 0},
-	}}
+	},
+		Sequence: testSequence,
+	}
 	before.Move(Up)
 	after := [][]int{
 		{1, 5, 3, 3},
@@ -73,7 +81,9 @@ func TestMoveDown(t *testing.T) {
 		{0, 2, 2, 2},
 		{1, 3, 3, 1},
 		{0, 0, 5, 0},
-	}}
+	},
+		Sequence: testSequence,
+	}
 	before.Move(Down)
 	after := [][]int{
 		{0, 0, 0, 0},

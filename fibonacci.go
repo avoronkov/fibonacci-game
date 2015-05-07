@@ -18,24 +18,12 @@ const (
 	Down
 )
 
-var fib = []int{1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377}
-
-func SumFib(a, b int) (next int, ok bool) {
-	if a > b {
-		a, b = b, a
-	}
-	for i := 0; i < len(fib)-1; i++ {
-		if fib[i] == a && fib[i+1] == b {
-			next, ok = fib[i+2], true
-			break
-		}
-	}
-	return
-}
+// 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377 ...
 
 type Field struct {
-	Data  [][]int
-	Score int
+	Data     [][]int
+	Score    int
+	Sequence []int
 }
 
 func NewField() *Field {
@@ -44,7 +32,38 @@ func NewField() *Field {
 	for i, _ := range f.Data {
 		f.Data[i] = make([]int, 4)
 	}
+	f.Sequence = []int{1, 1, 2}
 	return f
+}
+
+func (f *Field) SumFib(a, b int) (next int, ok bool) {
+	if a > b {
+		a, b = b, a
+	}
+	for i := 0; i < len(f.Sequence)-1; i++ {
+		if f.Sequence[i] == a && f.Sequence[i+1] == b {
+			if i == len(f.Sequence)-2 {
+				f.Sequence = append(f.Sequence, a+b)
+			}
+			next, ok = f.Sequence[i+2], true
+			break
+		}
+	}
+	return
+}
+
+// Check if two numbers are next in Fibonacci sequence.
+// Does not update Sequence.
+func (f *Field) FibNear(a, b int) bool {
+	if a > b {
+		a, b = b, a
+	}
+	for i := 0; i < len(f.Sequence)-1; i++ {
+		if f.Sequence[i] == a && f.Sequence[i+1] == b {
+			return true
+		}
+	}
+	return false
 }
 
 func (f *Field) AddPoint() bool {
@@ -109,7 +128,7 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 	case Left:
 		for lx := x; lx >= 1; lx-- {
 			if pl := f.Data[y][lx-1]; pl != 0 {
-				if next, ok := SumFib(pl, cur); ok {
+				if next, ok := f.SumFib(pl, cur); ok {
 					f.Data[y][lx-1], f.Data[y][x] = -next, 0
 					f.Score += next
 					return true
@@ -127,7 +146,7 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 	case Right:
 		for rx := x; rx < 3; rx++ {
 			if pr := f.Data[y][rx+1]; pr != 0 {
-				if next, ok := SumFib(pr, cur); ok {
+				if next, ok := f.SumFib(pr, cur); ok {
 					f.Data[y][rx+1], f.Data[y][x] = -next, 0
 					f.Score += next
 					return true
@@ -145,7 +164,7 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 	case Up:
 		for uy := y; uy >= 1; uy-- {
 			if pu := f.Data[uy-1][x]; pu != 0 {
-				if next, ok := SumFib(pu, cur); ok {
+				if next, ok := f.SumFib(pu, cur); ok {
 					f.Data[uy-1][x], f.Data[y][x] = -next, 0
 					f.Score += next
 					return true
@@ -163,7 +182,7 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 	case Down:
 		for dy := y; dy < 3; dy++ {
 			if pd := f.Data[dy+1][x]; pd != 0 {
-				if next, ok := SumFib(pd, cur); ok {
+				if next, ok := f.SumFib(pd, cur); ok {
 					f.Data[dy+1][x], f.Data[y][x] = -next, 0
 					f.Score += next
 					return true
@@ -180,6 +199,24 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 		}
 	default:
 		panic(fmt.Errorf("Move(): unknown direction: %v", dir))
+	}
+	return false
+}
+
+// Check if there any possible moves. If no then game is over.
+func (f *Field) HasPossibleMoves() bool {
+	if f.countEmptyCells() > 0 {
+		return true
+	}
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			if j < 3 && f.FibNear(f.Data[i][j], f.Data[i][j+1]) {
+				return true
+			}
+			if i < 3 && f.FibNear(f.Data[i][j], f.Data[i+1][j]) {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -212,13 +249,15 @@ func (f *Field) fillEmptyCell(idx, value int) {
 
 type View struct {
 	win       *cur.Window
+	field     *Field
 	colored   bool
 	colorsMap []int16
 }
 
-func NewView(w *cur.Window) *View {
+func NewView(w *cur.Window, f *Field) *View {
 	v := new(View)
 	v.win = w
+	v.field = f
 	v.colored = cur.HasColors()
 	if v.colored {
 		if err := cur.StartColor(); err != nil {
@@ -251,8 +290,11 @@ func NewView(w *cur.Window) *View {
 	return v
 }
 
-func fibonacciIndex(x int) int16 {
-	for i, val := range fib[1:] {
+func (v *View) fibonacciIndex(x int) int16 {
+	if x == 0 {
+		return 0
+	}
+	for i, val := range v.field.Sequence[1:] {
 		if x == val {
 			return int16(i)
 		}
@@ -278,8 +320,9 @@ func formatNumber(x int) string {
 
 func (v *View) colorPrint(x int, a interface{}) {
 	if v.colored {
-		v.win.AttrOn(cur.ColorPair(fibonacciIndex(x)))
-		defer v.win.AttrOff(cur.ColorPair(fibonacciIndex(x)))
+		fi := v.fibonacciIndex(x)
+		v.win.AttrOn(cur.ColorPair(fi))
+		defer v.win.AttrOff(cur.ColorPair(fi))
 		if x >= 34 {
 			v.win.AttrOn(cur.A_BOLD)
 			defer v.win.AttrOff(cur.A_BOLD)
@@ -288,8 +331,16 @@ func (v *View) colorPrint(x int, a interface{}) {
 	v.win.Print(a)
 }
 
-func (v *View) drawLegend() {
-	for _, f := range fib {
+func (v *View) drawLegend(y int) {
+	s := ""
+	for _, f := range v.field.Sequence {
+		s = s + fmt.Sprintf("%d  ", f)
+	}
+	s += "..."
+	_, width := v.win.MaxYX()
+	x := width/2 - len(s)/2
+	v.win.Move(y, x)
+	for _, f := range v.field.Sequence {
 		v.colorPrint(f, f)
 		v.win.Print("  ")
 	}
@@ -300,19 +351,26 @@ func (v *View) drawScore(score int) {
 	v.win.Printf("Score: %v", score)
 }
 
-func (v *View) DrawField(f *Field) {
+func (v *View) DrawField() {
 	height, width := v.win.MaxYX()
-	startY, startX := height/2-5, width/2-15
-	v.win.Move(startY-4, startX-13)
-	v.drawLegend()
-	for y, line := range f.Data {
+	startY, startX := height/2-5, width/2-10
+	// v.win.Move(startY-4, startX-13)
+	v.drawLegend(startY - 4)
+	for y, line := range v.field.Data {
 		for x, value := range line {
 			v.win.Move(startY+y, startX+5*x)
 			v.colorPrint(value, formatNumber(value))
 		}
 	}
-	v.win.Move(startY+10, startX)
-	v.drawScore(f.Score)
+	v.win.Move(startY+7, startX+2)
+	v.drawScore(v.field.Score)
+}
+
+func (v *View) GameOver() {
+	height, width := v.win.MaxYX()
+	startY, startX := height/2, width/2-8
+	v.win.Move(startY, startX)
+	v.win.Print("Game over.")
 }
 
 func main() {
@@ -322,33 +380,37 @@ func main() {
 	}
 	defer cur.End()
 
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	cur.Echo(false)
 	cur.Cursor(0)
-
-	view := NewView(win)
-
-	rand.Seed(time.Now().UTC().UnixNano())
 
 	field := NewField()
 	field.AddPoint()
 	field.AddPoint()
+
+	view := NewView(win, field)
+
 L:
 	for {
-		view.DrawField(field)
+		view.DrawField()
+		if !field.HasPossibleMoves() {
+			view.GameOver()
+		}
 		switch key := win.GetChar(); key {
-		case cur.KEY_LEFT, 'h':
+		case cur.KEY_LEFT, 'h', 'a':
 			if field.Move(Left) {
 				field.AddPoint()
 			}
-		case cur.KEY_RIGHT, 'l':
+		case cur.KEY_RIGHT, 'l', 'd':
 			if field.Move(Right) {
 				field.AddPoint()
 			}
-		case cur.KEY_UP, 'k':
+		case cur.KEY_UP, 'k', 'w':
 			if field.Move(Up) {
 				field.AddPoint()
 			}
-		case cur.KEY_DOWN, 'j':
+		case cur.KEY_DOWN, 'j', 's':
 			if field.Move(Down) {
 				field.AddPoint()
 			}
