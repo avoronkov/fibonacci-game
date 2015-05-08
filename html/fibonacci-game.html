@@ -1,0 +1,85 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Fibonacci game</title>
+<script language="javascript" src="./jsgame.js"></script>
+<script language="javascript">
+
+var field;
+
+function startx() {
+	field = game.NewField();
+	field.AddPoint();
+	field.AddPoint();
+
+	drawField();
+}
+
+function drawField() {
+	var board = document.getElementById('mainBoard');
+
+	while( board.firstChild ) {
+		board.removeChild(board.firstChild);
+	}
+
+	for (var y=0; y< 4; y++){
+		for (var x=0; x<4; x++) {
+			var value = field.Get(y, x);
+			var div = document.createElement("div");
+			if (value > 0) {
+				var text = document.createTextNode(value);
+				div.appendChild(text);
+			}
+			document.getElementById("mainBoard").appendChild(div);
+		}
+	}
+}
+
+
+function handleKey(event) {
+	var keymaps = {
+		72:	game.Left,
+		74: game.Down,
+		75: game.Up,
+		76: game.Right,
+	}
+	var keyCode = ('which' in event) ? event.which : event.keyCode;
+	var dir = keymaps[keyCode];
+	if (dir > 0) {
+		var moved = field.Move(dir);
+		if (moved) {
+			field.AddPoint();
+		}
+	}
+	drawField();
+}
+
+</script>
+<style>
+#mainBoard
+{
+	width:160px;
+	height:160px;
+	float:center;
+	// border:1px solid black;
+}
+
+div
+{
+	width:38px;
+	height:38px;
+	float:left;
+	border:1px solid black;
+}
+</style>
+</head>
+<body onload="startx()" onkeydown="handleKey(event)">
+<span id="spanfield"></span>
+<br/>
+
+<center>
+<div id="mainBoard"></div>
+</center>
+
+</body>
+</html>
