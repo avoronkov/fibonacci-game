@@ -16,7 +16,7 @@ const (
 
 type Field struct {
 	Data     [][]int
-	Score    int
+	score    int
 	Sequence []int
 }
 
@@ -36,6 +36,10 @@ func (f *Field) String() string {
 
 func (f *Field) Get(y, x int) int {
 	return f.Data[y][x]
+}
+
+func (f *Field) Score() int {
+	return f.score
 }
 
 func (f *Field) SumFib(a, b int) (next int, ok bool) {
@@ -132,7 +136,7 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 			if pl := f.Data[y][lx-1]; pl != 0 {
 				if next, ok := f.SumFib(pl, cur); ok {
 					f.Data[y][lx-1], f.Data[y][x] = -next, 0
-					f.Score += next
+					f.score += next
 					return true
 				} else if lx != x {
 					f.Data[y][lx], f.Data[y][x] = cur, 0
@@ -150,7 +154,7 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 			if pr := f.Data[y][rx+1]; pr != 0 {
 				if next, ok := f.SumFib(pr, cur); ok {
 					f.Data[y][rx+1], f.Data[y][x] = -next, 0
-					f.Score += next
+					f.score += next
 					return true
 				} else if rx != x {
 					f.Data[y][rx], f.Data[y][x] = cur, 0
@@ -168,7 +172,7 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 			if pu := f.Data[uy-1][x]; pu != 0 {
 				if next, ok := f.SumFib(pu, cur); ok {
 					f.Data[uy-1][x], f.Data[y][x] = -next, 0
-					f.Score += next
+					f.score += next
 					return true
 				} else if uy != y {
 					f.Data[uy][x], f.Data[y][x] = cur, 0
@@ -186,7 +190,7 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 			if pd := f.Data[dy+1][x]; pd != 0 {
 				if next, ok := f.SumFib(pd, cur); ok {
 					f.Data[dy+1][x], f.Data[y][x] = -next, 0
-					f.Score += next
+					f.score += next
 					return true
 				} else if dy != y {
 					f.Data[dy][x], f.Data[y][x] = cur, 0

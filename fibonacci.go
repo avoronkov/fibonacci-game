@@ -17,6 +17,7 @@ type View struct {
 	field     *Field
 	colored   bool
 	colorsMap []int16
+	hideHint  bool
 }
 
 func NewView(w *cur.Window, f *Field) *View {
@@ -96,6 +97,14 @@ func (v *View) colorPrint(x int, a interface{}) {
 	v.win.Print(a)
 }
 
+func (v *View) drawTitle(y int) {
+	title := "Fibonacci game"
+	_, width := v.win.MaxYX()
+	x := width/2 - len(title)/2
+	v.win.Move(y, x)
+	v.win.Print(title)
+}
+
 func (v *View) drawLegend(y int) {
 	s := ""
 	for _, f := range v.field.Sequence {
@@ -120,6 +129,7 @@ func (v *View) DrawField() {
 	height, width := v.win.MaxYX()
 	startY, startX := height/2-5, width/2-10
 	// v.win.Move(startY-4, startX-13)
+	v.drawTitle(startY - 6)
 	v.drawLegend(startY - 4)
 	for y, line := range v.field.Data {
 		for x, value := range line {
@@ -128,7 +138,29 @@ func (v *View) DrawField() {
 		}
 	}
 	v.win.Move(startY+7, startX+2)
-	v.drawScore(v.field.Score)
+	v.drawScore(v.field.Score())
+	if !v.hideHint {
+		v.drawHint(startY + 9)
+	} else {
+		v.win.Move(startY+9, 0)
+		_ = v.win.ClearToBottom()
+	}
+}
+
+func (v *View) drawHint(y int) {
+	s1 := "How to play: use WASD to move tiles."
+	s2 := "Try summing Fibonacci numbers"
+
+	_, width := v.win.MaxYX()
+	x := width/2 - len(s1)/2
+	v.win.Move(y, x)
+	v.win.Print(s1)
+	v.win.Move(y+1, x)
+	v.win.Print(s2)
+}
+
+func (v *View) ToogleHint() {
+	v.hideHint = !v.hideHint
 }
 
 func (v *View) GameOver() {
@@ -179,6 +211,8 @@ L:
 			if field.Move(Down) {
 				field.AddPoint()
 			}
+		case '/':
+			view.ToogleHint()
 		case 'q':
 			break L
 		}
