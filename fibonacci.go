@@ -60,7 +60,8 @@ func (v *View) fibonacciIndex(x int) int16 {
 	if x == 0 {
 		return 0
 	}
-	for i, val := range v.field.Sequence[1:] {
+	seq := v.field.Sequence()
+	for i, val := range seq[1:] {
 		if x == val {
 			return int16(i)
 		}
@@ -107,14 +108,16 @@ func (v *View) drawTitle(y int) {
 
 func (v *View) drawLegend(y int) {
 	s := ""
-	for _, f := range v.field.Sequence {
+	seq := v.field.Sequence()
+
+	for _, f := range seq {
 		s = s + fmt.Sprintf("%d  ", f)
 	}
 	s += "..."
 	_, width := v.win.MaxYX()
 	x := width/2 - len(s)/2
 	v.win.Move(y, x)
-	for _, f := range v.field.Sequence {
+	for _, f := range seq {
 		v.colorPrint(f, f)
 		v.win.Print("  ")
 	}

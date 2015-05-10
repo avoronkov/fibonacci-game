@@ -17,7 +17,7 @@ const (
 type Field struct {
 	Data     [][]int
 	score    int
-	Sequence []int
+	sequence []int
 }
 
 func NewField() *Field {
@@ -26,7 +26,7 @@ func NewField() *Field {
 	for i, _ := range f.Data {
 		f.Data[i] = make([]int, 4)
 	}
-	f.Sequence = []int{1, 1, 2}
+	f.sequence = []int{1, 1, 2}
 	return f
 }
 
@@ -42,16 +42,20 @@ func (f *Field) Score() int {
 	return f.score
 }
 
+func (f *Field) Sequence() []int {
+	return f.sequence
+}
+
 func (f *Field) SumFib(a, b int) (next int, ok bool) {
 	if a > b {
 		a, b = b, a
 	}
-	for i := 0; i < len(f.Sequence)-1; i++ {
-		if f.Sequence[i] == a && f.Sequence[i+1] == b {
-			if i == len(f.Sequence)-2 {
-				f.Sequence = append(f.Sequence, a+b)
+	for i := 0; i < len(f.sequence)-1; i++ {
+		if f.sequence[i] == a && f.sequence[i+1] == b {
+			if i == len(f.sequence)-2 {
+				f.sequence = append(f.sequence, a+b)
 			}
-			next, ok = f.Sequence[i+2], true
+			next, ok = f.sequence[i+2], true
 			break
 		}
 	}
@@ -59,13 +63,13 @@ func (f *Field) SumFib(a, b int) (next int, ok bool) {
 }
 
 // Check if two numbers are next in Fibonacci sequence.
-// Does not update Sequence.
+// Does not update sequence.
 func (f *Field) FibNear(a, b int) bool {
 	if a > b {
 		a, b = b, a
 	}
-	for i := 0; i < len(f.Sequence)-1; i++ {
-		if f.Sequence[i] == a && f.Sequence[i+1] == b {
+	for i := 0; i < len(f.sequence)-1; i++ {
+		if f.sequence[i] == a && f.sequence[i+1] == b {
 			return true
 		}
 	}

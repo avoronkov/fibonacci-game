@@ -13,7 +13,7 @@ func TestFieldMoveRight(t *testing.T) {
 		{1, 2, 3, 5},
 		{0, 2, 2, 1},
 	},
-		Sequence: testSequence,
+		sequence: testSequence,
 	}
 	before.Move(Right)
 	after := [][]int{
@@ -36,7 +36,7 @@ func TestMoveLeft(t *testing.T) {
 		{1, 2, 3, 5},
 		{1, 2, 2, 0},
 	},
-		Sequence: testSequence,
+		sequence: testSequence,
 	}
 	before.Move(Left)
 	after := [][]int{
@@ -59,7 +59,7 @@ func TestMoveUp(t *testing.T) {
 		{1, 3, 3, 2},
 		{0, 0, 5, 0},
 	},
-		Sequence: testSequence,
+		sequence: testSequence,
 	}
 	before.Move(Up)
 	after := [][]int{
@@ -82,7 +82,7 @@ func TestMoveDown(t *testing.T) {
 		{1, 3, 3, 1},
 		{0, 0, 5, 0},
 	},
-		Sequence: testSequence,
+		sequence: testSequence,
 	}
 	before.Move(Down)
 	after := [][]int{

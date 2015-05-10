@@ -19,6 +19,19 @@ function startx() {
 }
 
 function drawField() {
+	var colorMap = {
+		1: "#bbbbbb",
+		2: "#ffff55",
+		3: "#00af00",
+		5: "#5555ff",
+		8: "#008787",
+		13: "#aa00aa",
+		21: "#cc0000",
+		34: "#f0f0a0",
+		55: "#55ff55",
+		89: "#6060bb",
+		144: "#94e13a",
+	};
 	var board = document.getElementById('mainBoard');
 
 	while( board.firstChild ) {
@@ -30,9 +43,13 @@ function drawField() {
 			var value = field.Get(y, x);
 			var div = document.createElement("div");
 			div.className = "boardCell";
+			div.style.fontWeight = 'bold';
 			if (value > 0) {
 				var text = document.createTextNode(value);
 				div.appendChild(text);
+				if (colorMap[value]) {
+					div.style.backgroundColor = colorMap[value];
+				}
 			}
 			board.appendChild(div);
 		}
@@ -45,6 +62,18 @@ function drawField() {
 	}
 	score.appendChild(document.createTextNode(field.Score()));
 
+	// draw sequence
+	var seq = document.getElementById('sequence')
+	while( seq.firstChild ) {
+		seq.removeChild(seq.firstChild);
+	}
+	var seqText = "";
+	var fs = field.Sequence();
+	for (var foo in fs) {
+		seqText += "  " + fs[foo];
+	}
+	seqText += "  ...";
+	seq.appendChild(document.createTextNode(seqText));
 }
 
 function toogleHelp() {
@@ -72,13 +101,13 @@ function handleKey(event) {
 	var keyCode = ('which' in event) ? event.which : event.keyCode;
 
 	if (keyCode == 191) {
-		// /
+		// '/'
 		toogleHelp();
 		return;
 	}
 
 	var dir = keymaps[keyCode];
-	if (dir > 0) {
+	if (dir) {
 		var moved = field.Move(dir);
 		if (moved) {
 			field.AddPoint();
@@ -93,8 +122,7 @@ function handleKey(event) {
 {
 	width:160px;
 	height:160px;
-	float:center;
-	/* border:1px solid black; */
+	/* float:center;*/
 }
 
 .boardCell
@@ -103,6 +131,8 @@ function handleKey(event) {
 	height:38px;
 	float:left;
 	border:1px solid black;
+	line-height: 38px;
+	font-weight: bold;
 }
 
 </style>
