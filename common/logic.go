@@ -1,9 +1,6 @@
 package common
 
-import (
-	"fmt"
-	"math/rand"
-)
+import "math/rand"
 
 type Direction int
 
@@ -28,10 +25,6 @@ func NewField() *Field {
 	}
 	f.sequence = []int{1, 1, 2}
 	return f
-}
-
-func (f *Field) String() string {
-	return fmt.Sprintf("%v", f.Data)
 }
 
 func (f *Field) Get(y, x int) int {
@@ -115,7 +108,7 @@ func (f *Field) Move(dir Direction) (moved bool) {
 			}
 		}
 	default:
-		panic(fmt.Errorf("Move(): unknown direction: %v", dir))
+		panic(UnknownDirection{dir})
 	}
 
 	for i, row := range f.Data {
@@ -208,7 +201,7 @@ func (f *Field) movePoint(y, x int, dir Direction) bool {
 			return true
 		}
 	default:
-		panic(fmt.Errorf("Move(): unknown direction: %v", dir))
+		panic(UnknownDirection{dir})
 	}
 	return false
 }
@@ -255,4 +248,8 @@ func (f *Field) fillEmptyCell(idx, value int) {
 			}
 		}
 	}
+}
+
+type UnknownDirection struct {
+	X Direction
 }
