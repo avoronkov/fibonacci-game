@@ -10,6 +10,9 @@
 
 var field;
 
+var mouseDownX;
+var mouseDownY;
+
 function startx() {
 	field = game.NewField();
 	field.AddPoint();
@@ -67,10 +70,10 @@ function drawField() {
 	while( seq.firstChild ) {
 		seq.removeChild(seq.firstChild);
 	}
-	var seqText = "";
 	var fs = field.Sequence();
-	for (var foo in fs) {
-		seqText += "  " + fs[foo];
+	var seqText = "";
+	for (var i=0; i<fs.length; i++) {
+		seqText += "  " + fs[i];
 	}
 	seqText += "  ...";
 	seq.appendChild(document.createTextNode(seqText));
@@ -107,6 +110,10 @@ function handleKey(event) {
 	}
 
 	var dir = keymaps[keyCode];
+	fieldMove(dir);
+}
+
+function fieldMove(dir) {
 	if (dir) {
 		var moved = field.Move(dir);
 		if (moved) {
@@ -116,23 +123,61 @@ function handleKey(event) {
 	drawField();
 }
 
+window.addEventListener('load', function(){ // on page load
+ 
+    document.body.addEventListener('touchstart', function(e){
+		mouseDownX = e.changedTouches[0].pageX;
+		mouseDownY = e.changedTouches[0].pageY;
+    }, false);
+
+    document.body.addEventListener('touchend', function(e){
+		var x = e.changedTouches[0].pageX;
+		var y = e.changedTouches[0].pageY;
+		if (mouseDownX > 0 && mouseDownY > 0) {
+			var dx = x - mouseDownX;
+			var dy = y - mouseDownY;
+			if (Math.abs(dy) * 2 < Math.abs(dx)) {
+				if (dx > 80) {
+					fieldMove(game.Right);
+				}
+				if (dx < -80) {
+					fieldMove(game.Left);
+				}
+			}
+			if (Math.abs(dx) * 2 < Math.abs(dy)) {
+				if (dy > 80) {
+					fieldMove(game.Down);
+				}
+				if (dy < -80) {
+					fieldMove(game.Up);
+				}
+			}
+		}
+		mouseDownX = 0;
+		mouseDownY = 0;
+
+	}, false);
+ 
+}, false)
+
 </script>
 <style>
 #mainBoard
 {
-	width:160px;
-	height:160px;
+	width:400px;
+	height:400px;
 	/* float:center;*/
 }
 
 .boardCell
 {
-	width:38px;
-	height:38px;
+	width:98px;
+	height:98px;
 	float:left;
 	border:1px solid black;
-	line-height: 38px;
+	line-height: 98px;
 	font-weight: bold;
+	font-size: 3em;
 }
 
 </style>
@@ -146,8 +191,7 @@ function handleKey(event) {
 		<p><div id="mainBoard"></div></p>
 		<br/>
 		<p><span id="sequence"></span></p>
-		<br />
-		<p><span id="hint"><b>How-to play:</b> use arrow keys (or WASD or even HJKL) to move tiles, try summing Fibonacci numbers!</span></p>
+		<p><span id="hint" title="use arrow keys (or WASD or even HJKL) or swipe to move tiles, try summing Fibonacci numbers!">?</span></p>
 	</div>
 </center>
 
