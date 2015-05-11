@@ -111,3 +111,11 @@ func intSliceEqual(a, b []int) bool {
 
 	return true
 }
+
+func TestDirectionPositive(t *testing.T) {
+	for _, d := range []Direction{Left, Right, Up, Down} {
+		if d <= 0 {
+			t.Errorf("Non positive direction: %v == %d", d, d)
+		}
+	}
+}
