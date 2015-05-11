@@ -1,18 +1,32 @@
 package common
 
-import (
-	"fmt"
-	"math/rand"
-)
+import "math/rand"
 
 type Direction int
 
 const (
-	Left  Direction = 1
-	Right Direction = 2
-	Up    Direction = 3
-	Down  Direction = 4
+	// Direction should be positive (>0)
+	_              = iota
+	Left Direction = iota
+	Right
+	Up
+	Down
 )
+
+func (d Direction) String() string {
+	switch d {
+	case Left:
+		return "LEFT"
+	case Right:
+		return "RIGHT"
+	case Up:
+		return "UP"
+	case Down:
+		return "DOWN"
+	default:
+		return "UNKNOWN"
+	}
+}
 
 type Field struct {
 	Data     [][]int
@@ -28,10 +42,6 @@ func NewField() *Field {
 	}
 	f.sequence = []int{1, 1, 2}
 	return f
-}
-
-func (f *Field) String() string {
-	return fmt.Sprintf("%v", f.Data)
 }
 
 func (f *Field) Get(y, x int) int {
@@ -90,32 +100,32 @@ func (f *Field) AddPoint() bool {
 
 func (f *Field) Move(dir Direction) (moved bool) {
 	switch dir {
-	case Left:
+	case Left, Up, Right, Down:
+		if dir == Right {
+			f.reflectVertically()
+		}
+		if dir == Down {
+			f.reflectHorizontally()
+		}
+		if dir == Up || dir == Down {
+			f.transpose()
+		}
 		for y, line := range f.Data {
 			for x, _ := range line {
-				moved = f.movePoint(y, x, dir) || moved
+				moved = f.movePointLeft(y, x) || moved
 			}
 		}
-	case Right:
-		for y, _ := range f.Data {
-			for x := 3; x >= 0; x-- {
-				moved = f.movePoint(y, x, dir) || moved
-			}
+		if dir == Up || dir == Down {
+			f.transpose()
 		}
-	case Up:
-		for x := 0; x < 4; x++ {
-			for y := 0; y < 4; y++ {
-				moved = f.movePoint(y, x, dir) || moved
-			}
+		if dir == Down {
+			f.reflectHorizontally()
 		}
-	case Down:
-		for x := 0; x < 4; x++ {
-			for y := 3; y >= 0; y-- {
-				moved = f.movePoint(y, x, dir) || moved
-			}
+		if dir == Right {
+			f.reflectVertically()
 		}
 	default:
-		panic(fmt.Errorf("Move(): unknown direction: %v", dir))
+		panic(UnknownDirection{dir})
 	}
 
 	for i, row := range f.Data {
@@ -129,88 +139,60 @@ func (f *Field) Move(dir Direction) (moved bool) {
 	return
 }
 
-func (f *Field) movePoint(y, x int, dir Direction) bool {
+func (f *Field) movePointLeft(y, x int) bool {
 	cur := f.Data[y][x]
 	if cur == 0 {
 		return false
 	}
-	switch dir {
-	case Left:
-		for lx := x; lx >= 1; lx-- {
-			if pl := f.Data[y][lx-1]; pl != 0 {
-				if next, ok := f.SumFib(pl, cur); ok {
-					f.Data[y][lx-1], f.Data[y][x] = -next, 0
-					f.score += next
-					return true
-				} else if lx != x {
-					f.Data[y][lx], f.Data[y][x] = cur, 0
-					return true
-				}
-				return false
+
+	for lx := x; lx >= 1; lx-- {
+		if pl := f.Data[y][lx-1]; pl != 0 {
+			if next, ok := f.SumFib(pl, cur); ok {
+				f.Data[y][lx-1], f.Data[y][x] = -next, 0
+				f.score += next
+				return true
+			} else if lx != x {
+				f.Data[y][lx], f.Data[y][x] = cur, 0
+				return true
 			}
+			return false
 		}
-		if x != 0 {
-			f.Data[y][0], f.Data[y][x] = cur, 0
-			return true
-		}
-	case Right:
-		for rx := x; rx < 3; rx++ {
-			if pr := f.Data[y][rx+1]; pr != 0 {
-				if next, ok := f.SumFib(pr, cur); ok {
-					f.Data[y][rx+1], f.Data[y][x] = -next, 0
-					f.score += next
-					return true
-				} else if rx != x {
-					f.Data[y][rx], f.Data[y][x] = cur, 0
-					return true
-				}
-				return false
-			}
-		}
-		if x != 3 {
-			f.Data[y][3], f.Data[y][x] = cur, 0
-			return true
-		}
-	case Up:
-		for uy := y; uy >= 1; uy-- {
-			if pu := f.Data[uy-1][x]; pu != 0 {
-				if next, ok := f.SumFib(pu, cur); ok {
-					f.Data[uy-1][x], f.Data[y][x] = -next, 0
-					f.score += next
-					return true
-				} else if uy != y {
-					f.Data[uy][x], f.Data[y][x] = cur, 0
-					return true
-				}
-				return false
-			}
-		}
-		if y != 0 {
-			f.Data[0][x], f.Data[y][x] = cur, 0
-			return true
-		}
-	case Down:
-		for dy := y; dy < 3; dy++ {
-			if pd := f.Data[dy+1][x]; pd != 0 {
-				if next, ok := f.SumFib(pd, cur); ok {
-					f.Data[dy+1][x], f.Data[y][x] = -next, 0
-					f.score += next
-					return true
-				} else if dy != y {
-					f.Data[dy][x], f.Data[y][x] = cur, 0
-					return true
-				}
-				return false
-			}
-		}
-		if y != 3 {
-			f.Data[3][x], f.Data[y][x] = cur, 0
-			return true
-		}
-	default:
-		panic(fmt.Errorf("Move(): unknown direction: %v", dir))
+	}
+	if x != 0 {
+		f.Data[y][0], f.Data[y][x] = cur, 0
+		return true
 	}
 	return false
+}
+
+func (f *Field) transpose() {
+	for y, row := range f.Data {
+		for x := y + 1; x < len(row); x++ {
+			f.Data[x][y], f.Data[y][x] = f.Data[y][x], f.Data[x][y]
+		}
+	}
+}
+
+func (f *Field) reflectVertically() {
+	for y, row := range f.Data {
+		x1, x2 := 0, len(row)-1
+		for x1 < x2 {
+			f.Data[y][x1], f.Data[y][x2] = f.Data[y][x2], f.Data[y][x1]
+			x1++
+			x2--
+		}
+	}
+}
+
+func (f *Field) reflectHorizontally() {
+	y1, y2 := 0, len(f.Data[0])-1
+	for y1 < y2 {
+		for x, _ := range f.Data[0] {
+			f.Data[y1][x], f.Data[y2][x] = f.Data[y2][x], f.Data[y1][x]
+		}
+		y1++
+		y2--
+	}
 }
 
 // Check if there any possible moves. If no then game is over.
@@ -255,4 +237,8 @@ func (f *Field) fillEmptyCell(idx, value int) {
 			}
 		}
 	}
+}
+
+type UnknownDirection struct {
+	X Direction
 }
