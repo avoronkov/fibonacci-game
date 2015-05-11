@@ -17,6 +17,9 @@ html/fibonacci-game.html: html/jsgame.js html/fibonacci-game.html.tpl
 
 html-game: html/fibonacci-game.html
 
+index: html/fibonacci-game.html
+	cp -f $^ $@.html
+
 all: fibonacci-game html-game
 
 clean:
